@@ -1,6 +1,7 @@
 from seleniumwire import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.keys import Keys
 from seleniumwire.utils import decode
 import requests
 import json
@@ -12,6 +13,15 @@ import threading
 import queue
 import unicodedata
 import logging
+import time
+
+# 更换自己的账号密码
+user = "修改自己的账号"
+passwd = "修改自己的密码"
+
+notes_url = "https://yun.smartisan.com/#/notes"
+login_url = "https://account.smartisan.com/#/v2/login?return_url=https:%2F%2Fcloud.smartisan.com%2F%23%2Fnotes"
+image_url = "https://yun.smartisan.com/apps/note/notesimage/"
 
 # 工作目录
 if not os.path.exists("downloads"):
@@ -42,22 +52,29 @@ chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument("--incognito")
 
 
-driver = webdriver.Chrome(chrome_options=chrome_options)
+# driver = webdriver.Chrome(chrome_options=chrome_options)
+driver = webdriver.Chrome()
 
-
-driver.get("https://yun.smartisan.com/")
+driver.get(login_url)
 wait_load_complete(driver)
 
-driver.find_element(By.CLASS_NAME, "login-btn").click()
-wait_load_complete(driver)
-
-input("输入用户名和密码，点击登录后请回车")
+# 点击普通登录
+driver.find_element(By.XPATH, "//a[@ng-click='switchModel()']").click()
+# 定位并输入用户名和密码字段
+username_field = driver.find_element(By.XPATH, "//input[@ng-model='user.username']")
+password_field = driver.find_element(By.XPATH, "//input[@ng-model='user.password']")
+username_field.send_keys(user)
+password_field.send_keys(passwd)
+# 点击登录
+driver.find_element(By.CLASS_NAME, "btn-wrapper").click()
+time.sleep(2)
+# 等待页面加载完成
 
 cookies = driver.get_cookies()
 user_agent = driver.execute_script("return navigator.userAgent;")
 
 
-driver.get("https://yun.smartisan.com/#/notes")
+driver.get(notes_url)
 request = driver.wait_for_request(r"index.php\?r=v2.*", timeout=30)
 web_response = decode(
     request.response.body,
@@ -175,11 +192,12 @@ for note_item in note_list:
     note_item["modify_time_r"] = str(modify_time)  # readable time
 
     # 每个便签单独创建文件夹
+
     filename = (
-        modify_time.strftime(DATETIME_FORMAT)
-        + "_"
-        + slugify(note_item["title"], allow_unicode=True)
-        + ".md"
+            modify_time.strftime(DATETIME_FORMAT)
+            + "_"
+            + slugify(note_item["title"], allow_unicode=True)[:10] # 文件名取10个字符，否则太长会导致错误
+            + ".md"
     )
 
     subdir = os.path.join(work_dir, filename)
