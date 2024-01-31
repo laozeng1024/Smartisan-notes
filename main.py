@@ -1,4 +1,5 @@
 from seleniumwire import webdriver
+# from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
@@ -52,14 +53,19 @@ chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument("--incognito")
 
 
-# driver = webdriver.Chrome(chrome_options=chrome_options)
-driver = webdriver.Chrome()
+options = webdriver.ChromeOptions()
+# 忽略证书错误
+options.add_argument('--ignore-certificate-errors')
+# 如需后台执行，不弹出UI界面开启下面参数
+# options.add_argument('--headless')
+driver = webdriver.Chrome(chrome_options=options)
 
 driver.get(login_url)
 wait_load_complete(driver)
 
 # 点击普通登录
 driver.find_element(By.XPATH, "//a[@ng-click='switchModel()']").click()
+
 # 定位并输入用户名和密码字段
 username_field = driver.find_element(By.XPATH, "//input[@ng-model='user.username']")
 password_field = driver.find_element(By.XPATH, "//input[@ng-model='user.password']")
@@ -192,7 +198,15 @@ for note_item in note_list:
     note_item["modify_time_r"] = str(modify_time)  # readable time
 
     # 每个便签单独创建文件夹
-
+    '''
+   
+    filename = (
+        modify_time.strftime(DATETIME_FORMAT)
+        + "_"
+        + slugify(note_item["title"], allow_unicode=True)
+        + ".md"
+    )
+    '''
     filename = (
             modify_time.strftime(DATETIME_FORMAT)
             + "_"
